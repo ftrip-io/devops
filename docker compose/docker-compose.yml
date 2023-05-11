@@ -1,4 +1,3 @@
-
 version: "3.8"
 
 services:
@@ -20,7 +19,6 @@ services:
       - ftripio
     ports:
       - ${MONGODB_PORT}:27017
-
 
   mongo-express:
     image: mongo-express:1.0.0-alpha
@@ -73,50 +71,166 @@ services:
     networks:
       - ftripio
     ports:
-        - 5672:5672
-        - 15672:15672
+      - 5672:5672
+      - 15672:15672
     volumes:
-        - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
-        - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
     healthcheck:
       test: rabbitmq-diagnostics -q ping
       interval: 30s
       timeout: 30s
       retries: 3
 
-  playground-service:
-    image: ftrip.io/playground-service
+  # playground-service:
+  #   image: ftripio/playground-service
+  #   restart: always
+  #   networks:
+  #     - ftripio
+  #   ports:
+  #     - 5000:80
+  #   environment:
+  #     JWT_SECRET: ${JWT_SECRET}
+
+  #     MDB_URL: mongo:${MONGODB_PORT}
+  #     MDB_USERNAME: ${MONGODB_USERNAME}
+  #     MDB_PASSWORD: ${MONGODB_PASSWORD}
+  #     MDB_DATABASE: ${PS_MDB_DATABASE}
+
+  #     DB_SERVER: mariadb
+  #     DB_PORT: ${DB_PORT}
+  #     DB_USER: ${DB_USER}
+  #     DB_PASSWORD: ${DB_PASSWORD}
+  #     DB_DATABASE: ${PS_MDB_DATABASE}
+
+  #     RMQ_SERVER: rabbitmq
+  #     RMQ_PORT: 5672
+  #     RMQ_USER: ${RMQ_USER}
+  #     RMQ_PASSWORD: ${RMQ_PASSWORD}
+
+  #     API_PREFIX: ${PS_API_PREFIX}
+  #   depends_on:
+  #     mongo:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+  #     # mariadb: mariadb
+
+  user-service:
+    image: ftripio/user-service
     restart: always
     networks:
       - ftripio
-    ports: 
-      - 5000:80
+    ports:
+      - 80
     environment:
       JWT_SECRET: ${JWT_SECRET}
 
-      MDB_URL: mongo:${MONGODB_PORT}
-      MDB_USERNAME: ${MONGODB_USERNAME}
-      MDB_PASSWORD: ${MONGODB_PASSWORD}
-      MDB_DATABASE: ${PS_MDB_DATABASE}
+      HEALTH_CHECK_BASE_PATH: http://user-service:80
 
       DB_SERVER: mariadb
       DB_PORT: ${DB_PORT}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_DATABASE: ${PS_MDB_DATABASE}
+      DB_DATABASE: ${US_DB_DATABASE}
 
       RMQ_SERVER: rabbitmq
       RMQ_PORT: 5672
       RMQ_USER: ${RMQ_USER}
       RMQ_PASSWORD: ${RMQ_PASSWORD}
 
-      API_PREFIX: ${PS_API_PREFIX}
+      API_PREFIX: ${US_API_PREFIX}
+      API_PROXY_URL: http-proxy:3000
+
     depends_on:
-      mongo:
-        condition: service_healthy
       rabbitmq:
         condition: service_healthy
       # mariadb: mariadb
+
+  # notification-service:
+  #   image: ftripio/notification-service
+  #   restart: always
+  #   networks:
+  #     - ftripio
+  #   ports:
+  #     - 80
+  #   environment:
+  #     JWT_SECRET: ${JWT_SECRET}
+
+  #     HEALTH_CHECK_BASE_PATH: http://notification-service:80
+
+  #     MDB_URL: mongo:${MONGODB_PORT}
+  #     MDB_USERNAME: ${MONGODB_USERNAME}
+  #     MDB_PASSWORD: ${MONGODB_PASSWORD}
+  #     MDB_DATABASE: ${NS_MDB_DATABASE}
+
+  #     RMQ_SERVER: rabbitmq
+  #     RMQ_PORT: 5672
+  #     RMQ_USER: ${RMQ_USER}
+  #     RMQ_PASSWORD: ${RMQ_PASSWORD}
+
+  #     API_PREFIX: ${NS_API_PREFIX}
+  #     API_PROXY_URL: http-proxy:3000
+
+  #   depends_on:
+  #     mongo:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+
+  # email-service:
+  #   image: ftripio/email-service
+  #   restart: always
+  #   networks:
+  #     - ftripio
+  #   ports:
+  #     - 80
+  #   environment:
+  #     HEALTH_CHECK_BASE_PATH: http://email-service:80
+
+  #     MDB_URL: mongo:${MONGODB_PORT}
+  #     MDB_USERNAME: ${MONGODB_USERNAME}
+  #     MDB_PASSWORD: ${MONGODB_PASSWORD}
+  #     MDB_DATABASE: ${ES_MDB_DATABASE}
+
+  #     RMQ_SERVER: rabbitmq
+  #     RMQ_PORT: 5672
+  #     RMQ_USER: ${RMQ_USER}
+  #     RMQ_PASSWORD: ${RMQ_PASSWORD}
+
+  #     SMTP_HOST: ${SMTP_HOST}
+  #     SMTP_PORT: ${SMTP_PORT}
+  #     SMTP_USERNAME: ${SMTP_USERNAME}
+  #     SMTP_PASSWORD: ${SMTP_PASSWORD}
+
+  #   depends_on:
+  #     mongo:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+
+  # realtime-communication-service:
+  #   image: ftripio/realtime-communication-service
+  #   restart: always
+  #   networks:
+  #     - ftripio
+  #   ports:
+  #     - 80
+  #   environment:
+  #     JWT_SECRET: ${JWT_SECRET}
+
+  #     HEALTH_CHECK_BASE_PATH: http://realtime-communication-service:80
+
+  #     RMQ_SERVER: rabbitmq
+  #     RMQ_PORT: 5672
+  #     RMQ_USER: ${RMQ_USER}
+  #     RMQ_PASSWORD: ${RMQ_PASSWORD}
+
+  #     API_PROXY_URL: http-proxy:3000
+
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
 
   http-proxy:
     image: nginx:stable-alpine3.17-slim
@@ -127,7 +241,10 @@ services:
     ports:
       - 3000:80
     depends_on:
-      - playground-service
+      # - playground-service
+      - user-service
+      # - notification-service
+      # - realtime-communication-service
 
 networks:
   ftripio:
