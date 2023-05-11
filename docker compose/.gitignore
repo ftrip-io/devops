@@ -1,2 +1,4 @@
 /maria-db-data
 /mongo-data
+
+.env.secrets
