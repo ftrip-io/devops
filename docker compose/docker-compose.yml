@@ -83,7 +83,7 @@ services:
       retries: 3
 
   # playground-service:
-  #   image: ftripio/playground-service
+  #   image: ftripio/playground-service-dev
   #   restart: always
   #   networks:
   #     - ftripio
@@ -116,39 +116,39 @@ services:
   #       condition: service_healthy
   #     # mariadb: mariadb
 
-  user-service:
-    image: ftripio/user-service
-    restart: always
-    networks:
-      - ftripio
-    ports:
-      - 80
-    environment:
-      JWT_SECRET: ${JWT_SECRET}
+  # user-service:
+  #   image: ftripio/user-service-dev
+  #   restart: always
+  #   networks:
+  #     - ftripio
+  #   ports:
+  #     - 80
+  #   environment:
+  #     JWT_SECRET: ${JWT_SECRET}
 
-      HEALTH_CHECK_BASE_PATH: http://user-service:80
+  #     HEALTH_CHECK_BASE_PATH: http://user-service:80
 
-      DB_SERVER: mariadb
-      DB_PORT: ${DB_PORT}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_DATABASE: ${US_DB_DATABASE}
+  #     DB_SERVER: mariadb
+  #     DB_PORT: ${DB_PORT}
+  #     DB_USER: ${DB_USER}
+  #     DB_PASSWORD: ${DB_PASSWORD}
+  #     DB_DATABASE: ${US_DB_DATABASE}
 
-      RMQ_SERVER: rabbitmq
-      RMQ_PORT: 5672
-      RMQ_USER: ${RMQ_USER}
-      RMQ_PASSWORD: ${RMQ_PASSWORD}
+  #     RMQ_SERVER: rabbitmq
+  #     RMQ_PORT: 5672
+  #     RMQ_USER: ${RMQ_USER}
+  #     RMQ_PASSWORD: ${RMQ_PASSWORD}
 
-      API_PREFIX: ${US_API_PREFIX}
-      API_PROXY_URL: http-proxy:3000
+  #     API_PREFIX: ${US_API_PREFIX}
+  #     API_PROXY_URL: http-proxy:3000
 
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      # mariadb: mariadb
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
+  #     # mariadb: mariadb
 
   # notification-service:
-  #   image: ftripio/notification-service
+  #   image: ftripio/notification-service-dev
   #   restart: always
   #   networks:
   #     - ftripio
@@ -179,7 +179,7 @@ services:
   #       condition: service_healthy
 
   # email-service:
-  #   image: ftripio/email-service
+  #   image: ftripio/email-service-dev
   #   restart: always
   #   networks:
   #     - ftripio
@@ -210,7 +210,7 @@ services:
   #       condition: service_healthy
 
   # realtime-communication-service:
-  #   image: ftripio/realtime-communication-service
+  #   image: ftripio/realtime-communication-service-dev
   #   restart: always
   #   networks:
   #     - ftripio
@@ -239,14 +239,84 @@ services:
     networks:
       - ftripio
     ports:
-      - 3000:80
-    depends_on:
+      - 4001:80
+    # depends_on:
       # - playground-service
-      - user-service
+      # - user-service
       # - notification-service
       # - realtime-communication-service
 
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    expose:
+      - 9090
+    links:
+      - cadvisor:cadvisor
+    depends_on:
+      - cadvisor
+    networks:
+      - back-tier
+
+  node-exporter:
+    image: prom/node-exporter
+    expose:
+      - 9100
+    networks:
+      - back-tier
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor-arm64:v0.47.0
+    volumes:
+      - /:/rootfs:ro
+      # - /var/run:/var/run:rw !!!!!!!!! TODO - FOR WINDOWS
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    expose:
+      - 8080
+    networks:
+      - back-tier
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    depends_on:
+      - prometheus
+    ports:
+      - 4000:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+    env_file:
+      - config.monitoring
+    networks:
+      - back-tier
+      - front-tier
+
+  grafana-init:
+    build:
+      context: ./grafana-init
+    links:
+      - grafana:grafana
+    depends_on:
+      - grafana
+    networks:
+      - front-tier
+    restart: on-failure
+
+volumes:
+  prometheus_data: {}
+  grafana_data: {}
+
 networks:
+  front-tier:
+    driver: bridge
+  back-tier:
+    driver: bridge
   ftripio:
     name: ftripio
     driver: bridge
