@@ -91,6 +91,8 @@ services:
   #     - 5000:80
   #   environment:
   #     JWT_SECRET: ${JWT_SECRET}
+  #     HEALTH_CHECK_BASE_PATH: http://playground-service:80
+  #     GRAFANA_LOKI_URL: http://loki:3100
 
   #     MDB_URL: mongo:${MONGODB_PORT}
   #     MDB_USERNAME: ${MONGODB_USERNAME}
@@ -108,13 +110,15 @@ services:
   #     RMQ_USER: ${RMQ_USER}
   #     RMQ_PASSWORD: ${RMQ_PASSWORD}
 
-  #     API_PREFIX: ${PS_API_PREFIX}
+  #     # API_PREFIX: ${PS_API_PREFIX}
+  #     API_PROXY_URL: http-proxy:3000
   #   depends_on:
   #     mongo:
   #       condition: service_healthy
   #     rabbitmq:
   #       condition: service_healthy
-  #     # mariadb: mariadb
+  #     mariadb:
+  #       condition: service_started
 
   # user-service:
   #   image: ftripio/user-service-dev
@@ -127,6 +131,7 @@ services:
   #     JWT_SECRET: ${JWT_SECRET}
 
   #     HEALTH_CHECK_BASE_PATH: http://user-service:80
+  #     GRAFANA_LOKI_URL: http://loki:3100
 
   #     DB_SERVER: mariadb
   #     DB_PORT: ${DB_PORT}
@@ -145,7 +150,8 @@ services:
   #   depends_on:
   #     rabbitmq:
   #       condition: service_healthy
-  #     # mariadb: mariadb
+  #     mariadb:
+  #       condition: service_started
 
   # notification-service:
   #   image: ftripio/notification-service-dev
@@ -158,6 +164,7 @@ services:
   #     JWT_SECRET: ${JWT_SECRET}
 
   #     HEALTH_CHECK_BASE_PATH: http://notification-service:80
+  #     GRAFANA_LOKI_URL: http://loki:3100
 
   #     MDB_URL: mongo:${MONGODB_PORT}
   #     MDB_USERNAME: ${MONGODB_USERNAME}
@@ -187,6 +194,7 @@ services:
   #     - 80
   #   environment:
   #     HEALTH_CHECK_BASE_PATH: http://email-service:80
+  #     GRAFANA_LOKI_URL: http://loki:3100
 
   #     MDB_URL: mongo:${MONGODB_PORT}
   #     MDB_USERNAME: ${MONGODB_USERNAME}
@@ -220,6 +228,7 @@ services:
   #     JWT_SECRET: ${JWT_SECRET}
 
   #     HEALTH_CHECK_BASE_PATH: http://realtime-communication-service:80
+  #     GRAFANA_LOKI_URL: http://loki:3100
 
   #     RMQ_SERVER: rabbitmq
   #     RMQ_PORT: 5672
@@ -241,10 +250,10 @@ services:
     ports:
       - 4001:80
     # depends_on:
-      # - playground-service
-      # - user-service
-      # - notification-service
-      # - realtime-communication-service
+    # - playground-service
+    # - user-service
+    # - notification-service
+    # - realtime-communication-service
 
   prometheus:
     image: prom/prometheus
@@ -283,19 +292,36 @@ services:
       - back-tier
 
   grafana:
-    image: grafana/grafana
-    container_name: grafana
+    image: grafana/grafana:9.5.2
     depends_on:
-      - prometheus
+      loki:
+        condition: service_healthy
+      prometheus:
+        condition: service_started
     ports:
       - 4000:3000
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
     env_file:
       - config.monitoring
     networks:
       - back-tier
       - front-tier
+
+  loki:
+    image: grafana/loki:main-5206e3a
+    networks:
+      - back-tier
+    ports:
+      - 3100:3100
+    command: -config.file=/etc/loki/local-config.yaml
+    healthcheck:
+      test: wget -q --tries=1 -O- http://loki:3100/ready
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
 
   grafana-init:
     build:
