@@ -70,12 +70,15 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RMQ_PASSWORD}
     networks:
       - ftripio
+      - back-tier
     ports:
       - 5672:5672
       - 15672:15672
+      - 15692:15692
     volumes:
       - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
       - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+      - ./config/rabbitmq:/etc/rabbitmq
     healthcheck:
       test: rabbitmq-diagnostics -q ping
       interval: 30s
@@ -258,7 +261,7 @@ services:
   prometheus:
     image: prom/prometheus
     volumes:
-      - ./prometheus/:/etc/prometheus/
+      - ./config/prometheus/:/etc/prometheus/
       - prometheus_data:/prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
@@ -302,7 +305,8 @@ services:
       - 4000:3000
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./config/grafana/provisioning:/etc/grafana/provisioning
+      - ./config/grafana/dashboards:/dashboards
     env_file:
       - config.monitoring
     networks:
@@ -322,17 +326,6 @@ services:
       timeout: 3s
       retries: 10
       start_period: 10s
-
-  grafana-init:
-    build:
-      context: ./grafana-init
-    links:
-      - grafana:grafana
-    depends_on:
-      - grafana
-    networks:
-      - front-tier
-    restart: on-failure
 
 volumes:
   prometheus_data: {}
