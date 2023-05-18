@@ -2016,7 +2016,7 @@
   "refresh": false,
   "schemaVersion": 22,
   "style": "dark",
-  "tags": ["Prometheus", "node-exporter"],
+  "tags": ["prometheus", "node-exporter"],
   "templating": {
     "list": [
       {
