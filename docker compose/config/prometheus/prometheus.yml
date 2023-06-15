@@ -41,10 +41,38 @@ scrape_configs:
     scrape_interval: 5s
     static_configs:
       - targets: ["loki:3100"]
-    metrics_path: "/metrics"
 
   - job_name: "jaeger"
     scrape_interval: 5s
     static_configs:
       - targets: ["jaeger:14269"]
-    metrics_path: "/metrics"
+
+  - job_name: "user-service"
+    scrape_interval: 5s
+    static_configs:
+      - targets: ["user-service:80"]
+
+  - job_name: "catalog-service"
+    scrape_interval: 5s
+    static_configs:
+      - targets: ["catalog-service:80"]
+
+  - job_name: "booking-service"
+    scrape_interval: 5s
+    static_configs:
+      - targets: ["booking-service:80"]
+
+  - job_name: "notification-service"
+    scrape_interval: 5s
+    static_configs:
+      - targets: ["notification-service:80"]
+
+  - job_name: "email-service"
+    scrape_interval: 5s
+    static_configs:
+      - targets: ["email-service:80"]
+
+  - job_name: "realtime-communication-service"
+    scrape_interval: 5s
+    static_configs:
+      - targets: ["realtime-communication-service:80"]
