@@ -1,4 +1,5 @@
 /maria-db-data
 /mongo-data
+/images
 
 .env.secrets

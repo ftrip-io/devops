@@ -7,18 +7,18 @@ services:
     volumes:
       - ./mongo-data:/data/db
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME: ${MDB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MDB_PASSWORD}
     healthcheck:
-      test: echo 'db.runCommand({serverStatus:1}).ok' | mongo admin -u $MONGODB_USERNAME -p $MONGODB_PASSWORD --quiet | grep 1
+      test: echo 'db.runCommand({serverStatus:1}).ok' | mongo admin -u $MDB_USERNAME -p $MDB_PASSWORD --quiet | grep 1
       interval: 10s
       timeout: 10s
       retries: 3
       start_period: 10s
     networks:
-      - ftripio
+      - application
     ports:
-      - ${MONGODB_PORT}:27017
+      - ${MDB_PORT}:27017
 
   mongo-express:
     image: mongo-express:1.0.0-alpha
@@ -28,11 +28,11 @@ services:
     ports:
       - 8081:8081
     environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGODB_USERNAME}
-      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGODB_PASSWORD}
-      ME_CONFIG_MONGODB_URL: mongodb://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@mongo:${MONGODB_PORT}
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MDB_USERNAME}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MDB_PASSWORD}
+      ME_CONFIG_MONGODB_URL: mongodb://${MDB_USERNAME}:${MDB_PASSWORD}@${MDB_URL}
     networks:
-      - ftripio
+      - application
     depends_on:
       mongo:
         condition: service_healthy
@@ -45,7 +45,7 @@ services:
     volumes:
       - ./maria-db-data:/var/lib/mysql
     networks:
-      - ftripio
+      - application
     ports:
       - ${DB_PORT}:3306
 
@@ -55,7 +55,7 @@ services:
       - dev
     restart: always
     networks:
-      - ftripio
+      - application
     ports:
       - 8082:8080
     environment:
@@ -69,8 +69,8 @@ services:
       RABBITMQ_DEFAULT_USER: ${RMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RMQ_PASSWORD}
     networks:
-      - ftripio
-      - back-tier
+      - application
+      - monitoring
     ports:
       - 5672:5672
       - 15672:15672
@@ -85,188 +85,153 @@ services:
       timeout: 30s
       retries: 3
 
-  # playground-service:
-  #   image: ftripio/playground-service-dev
-  #   restart: always
-  #   networks:
-  #     - ftripio
-  #   ports:
-  #     - 5000:80
-  #   environment:
-  #     JWT_SECRET: ${JWT_SECRET}
-  #     HEALTH_CHECK_BASE_PATH: http://playground-service:80
-  #     GRAFANA_LOKI_URL: http://loki:3100
-  #     JAEGER_SERVER: jaeger
-  #     JAEGER_PORT: 6831
+  user-service:
+    image: ftripio/user-service-dev
+    restart: always
+    networks:
+      - application
+      - monitoring
+    ports:
+      - 80
+    env_file: [".env.common", ".env.secrets"]
+    environment:
+      HEALTH_CHECK_BASE_PATH: http://user-service:80
+      DB_DATABASE: users_db
+      API_PREFIX: userService
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mariadb:
+        condition: service_started
 
-  #     MDB_URL: mongo:${MONGODB_PORT}
-  #     MDB_USERNAME: ${MONGODB_USERNAME}
-  #     MDB_PASSWORD: ${MONGODB_PASSWORD}
-  #     MDB_DATABASE: ${PS_MDB_DATABASE}
+  catalog-service:
+    image: ftripio/catalog-service-dev
+    restart: always
+    networks:
+      - application
+      - monitoring
+    ports:
+      - 80
+    env_file: [".env.common", ".env.secrets"]
+    environment:
+      HEALTH_CHECK_BASE_PATH: http://catalog-service:80
+      DB_DATABASE: catalog_db
+      API_PREFIX: catalogService
+      BOOKING_SERVICE_URL: http://booking-service:80
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mariadb:
+        condition: service_started
 
-  #     DB_SERVER: mariadb
-  #     DB_PORT: ${DB_PORT}
-  #     DB_USER: ${DB_USER}
-  #     DB_PASSWORD: ${DB_PASSWORD}
-  #     DB_DATABASE: ${PS_MDB_DATABASE}
+  booking-service:
+    image: ftripio/booking-service-dev
+    restart: always
+    networks:
+      - application
+      - monitoring
+    ports:
+      - 80
+    env_file: [".env.common", ".env.secrets"]
+    environment:
+      HEALTH_CHECK_BASE_PATH: http://booking-service:80
+      DB_DATABASE: booking_db
+      API_PREFIX: bookingService
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mariadb:
+        condition: service_started
 
-  #     RMQ_SERVER: rabbitmq
-  #     RMQ_PORT: 5672
-  #     RMQ_USER: ${RMQ_USER}
-  #     RMQ_PASSWORD: ${RMQ_PASSWORD}
+  notification-service:
+    image: ftripio/notification-service-dev
+    restart: always
+    networks:
+      - application
+      - monitoring
+    ports:
+      - 80
+    env_file: [".env.common", ".env.secrets"]
+    environment:
+      HEALTH_CHECK_BASE_PATH: http://notification-service:80
+      MDB_DATABASE: notifications_db
+      API_PREFIX: notificationService
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
-  #     # API_PREFIX: ${PS_API_PREFIX}
-  #     API_PROXY_URL: http-proxy:3000
-  #   depends_on:
-  #     mongo:
-  #       condition: service_healthy
-  #     rabbitmq:
-  #       condition: service_healthy
-  #     mariadb:
-  #       condition: service_started
+  email-service:
+    image: ftripio/email-service-dev
+    restart: always
+    networks:
+      - application
+      - monitoring
+    ports:
+      - 80
+    env_file: [".env.common", ".env.secrets"]
+    environment:
+      HEALTH_CHECK_BASE_PATH: http://email-service:80
+      MDB_DATABASE: emails_db
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
-  # user-service:
-  #   image: ftripio/user-service-dev
-  #   restart: always
-  #   networks:
-  #     - ftripio
-  #   ports:
-  #     - 80
-  #   environment:
-  #     JWT_SECRET: ${JWT_SECRET}
+  realtime-communication-service:
+    image: ftripio/realtime-communication-service-dev
+    restart: always
+    networks:
+      - application
+      - monitoring
+    ports:
+      - 80
+    env_file: [".env.common", ".env.secrets"]
+    environment:
+      HEALTH_CHECK_BASE_PATH: http://realtime-communication-service:80
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
-  #     HEALTH_CHECK_BASE_PATH: http://user-service:80
-  #     GRAFANA_LOKI_URL: http://loki:3100
-  #     JAEGER_SERVER: jaeger
-  #     JAEGER_PORT: 6831
+  image-service:
+    image: ftripio/image-service-dev
+    volumes:
+      - ./images:/app/images
+    networks:
+      - application
+    ports:
+      - 80
+    environment:
+      PORT: 80
+      AUTH_HOSTNAME: catalog-service
+      AUTH_PORT: 80
+      AUTH_PATH: /Accommodations/can-modify/
 
-  #     DB_SERVER: mariadb
-  #     DB_PORT: ${DB_PORT}
-  #     DB_USER: ${DB_USER}
-  #     DB_PASSWORD: ${DB_PASSWORD}
-  #     DB_DATABASE: ${US_DB_DATABASE}
-
-  #     RMQ_SERVER: rabbitmq
-  #     RMQ_PORT: 5672
-  #     RMQ_USER: ${RMQ_USER}
-  #     RMQ_PASSWORD: ${RMQ_PASSWORD}
-
-  #     API_PREFIX: ${US_API_PREFIX}
-  #     API_PROXY_URL: http-proxy:3000
-
-  #   depends_on:
-  #     rabbitmq:
-  #       condition: service_healthy
-  #     mariadb:
-  #       condition: service_started
-
-  # notification-service:
-  #   image: ftripio/notification-service-dev
-  #   restart: always
-  #   networks:
-  #     - ftripio
-  #   ports:
-  #     - 80
-  #   environment:
-  #     JWT_SECRET: ${JWT_SECRET}
-
-  #     HEALTH_CHECK_BASE_PATH: http://notification-service:80
-  #     GRAFANA_LOKI_URL: http://loki:3100
-  #     JAEGER_SERVER: jaeger
-  #     JAEGER_PORT: 6831
-
-  #     MDB_URL: mongo:${MONGODB_PORT}
-  #     MDB_USERNAME: ${MONGODB_USERNAME}
-  #     MDB_PASSWORD: ${MONGODB_PASSWORD}
-  #     MDB_DATABASE: ${NS_MDB_DATABASE}
-
-  #     RMQ_SERVER: rabbitmq
-  #     RMQ_PORT: 5672
-  #     RMQ_USER: ${RMQ_USER}
-  #     RMQ_PASSWORD: ${RMQ_PASSWORD}
-
-  #     API_PREFIX: ${NS_API_PREFIX}
-  #     API_PROXY_URL: http-proxy:3000
-
-  #   depends_on:
-  #     mongo:
-  #       condition: service_healthy
-  #     rabbitmq:
-  #       condition: service_healthy
-
-  # email-service:
-  #   image: ftripio/email-service-dev
-  #   restart: always
-  #   networks:
-  #     - ftripio
-  #   ports:
-  #     - 80
-  #   environment:
-  #     HEALTH_CHECK_BASE_PATH: http://email-service:80
-  #     GRAFANA_LOKI_URL: http://loki:3100
-  #     JAEGER_SERVER: jaeger
-  #     JAEGER_PORT: 6831
-
-  #     MDB_URL: mongo:${MONGODB_PORT}
-  #     MDB_USERNAME: ${MONGODB_USERNAME}
-  #     MDB_PASSWORD: ${MONGODB_PASSWORD}
-  #     MDB_DATABASE: ${ES_MDB_DATABASE}
-
-  #     RMQ_SERVER: rabbitmq
-  #     RMQ_PORT: 5672
-  #     RMQ_USER: ${RMQ_USER}
-  #     RMQ_PASSWORD: ${RMQ_PASSWORD}
-
-  #     SMTP_HOST: ${SMTP_HOST}
-  #     SMTP_PORT: ${SMTP_PORT}
-  #     SMTP_USERNAME: ${SMTP_USERNAME}
-  #     SMTP_PASSWORD: ${SMTP_PASSWORD}
-
-  #   depends_on:
-  #     mongo:
-  #       condition: service_healthy
-  #     rabbitmq:
-  #       condition: service_healthy
-
-  # realtime-communication-service:
-  #   image: ftripio/realtime-communication-service-dev
-  #   restart: always
-  #   networks:
-  #     - ftripio
-  #   ports:
-  #     - 80
-  #   environment:
-  #     JWT_SECRET: ${JWT_SECRET}
-
-  #     HEALTH_CHECK_BASE_PATH: http://realtime-communication-service:80
-  #     GRAFANA_LOKI_URL: http://loki:3100
-  #     JAEGER_SERVER: jaeger
-  #     JAEGER_PORT: 6831
-
-  #     RMQ_SERVER: rabbitmq
-  #     RMQ_PORT: 5672
-  #     RMQ_USER: ${RMQ_USER}
-  #     RMQ_PASSWORD: ${RMQ_PASSWORD}
-
-  #     API_PROXY_URL: http-proxy:3000
-
-  #   depends_on:
-  #     rabbitmq:
-  #       condition: service_healthy
+  frontend-service:
+    image: ftripio/frontend-service-dev
+    networks:
+      - application
+    ports:
+      - 3000:3000
 
   http-proxy:
     image: nginx:stable-alpine3.17-slim
     volumes:
       - ./config/proxy/nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
-      - ftripio
+      - application
     ports:
       - 4001:80
-    # depends_on:
-    # - playground-service
-    # - user-service
-    # - notification-service
-    # - realtime-communication-service
+    depends_on:
+      - user-service
+      - catalog-service
+      - booking-service
+      - notification-service
+      - email-service
+      - realtime-communication-service
+      - image-service
 
   prometheus:
     image: prom/prometheus
@@ -275,21 +240,21 @@ services:
       - prometheus_data:/prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
-    expose:
-      - 9090
+    ports:
+      - 9090:9090
     links:
       - cadvisor:cadvisor
     depends_on:
       - cadvisor
     networks:
-      - back-tier
+      - monitoring
 
   node-exporter:
     image: prom/node-exporter
     expose:
       - 9100
     networks:
-      - back-tier
+      - monitoring
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor-arm64:v0.47.0
@@ -302,7 +267,7 @@ services:
     expose:
       - 8080
     networks:
-      - back-tier
+      - monitoring
 
   grafana:
     image: grafana/grafana:9.5.2
@@ -320,13 +285,12 @@ services:
     env_file:
       - config.monitoring
     networks:
-      - back-tier
-      - front-tier
+      - monitoring
 
   loki:
     image: grafana/loki:main-5206e3a
     networks:
-      - back-tier
+      - monitoring
     ports:
       - 3100:3100
     command: -config.file=/etc/loki/local-config.yaml
@@ -341,8 +305,7 @@ services:
     image: jaegertracing/all-in-one:1.45
     restart: always
     networks:
-      - back-tier
-      - front-tier
+      - monitoring
     ports:
       - 5775:5775/udp
       - 6831:6831/udp
@@ -359,10 +322,7 @@ volumes:
   grafana_data: {}
 
 networks:
-  front-tier:
+  application:
     driver: bridge
-  back-tier:
-    driver: bridge
-  ftripio:
-    name: ftripio
+  monitoring:
     driver: bridge
