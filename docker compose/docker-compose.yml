@@ -5,7 +5,7 @@ services:
     image: mongo:4.2.23
     restart: always
     volumes:
-      - ./mongo-data:/data/db
+      - mongo_db_data:/data/db
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MDB_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MDB_PASSWORD}
@@ -43,7 +43,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: ftripio
     volumes:
-      - ./maria-db-data:/var/lib/mysql
+      - maria_db_data:/var/lib/mysql
     networks:
       - application
     ports:
@@ -204,7 +204,7 @@ services:
   image-service:
     image: ftripio/image-service-dev
     volumes:
-      - ./images:/app/images
+      - images_data:/app/images
     networks:
       - application
     ports:
@@ -324,8 +324,36 @@ services:
       - 9411:9411
 
 volumes:
-  prometheus_data: {}
-  grafana_data: {}
+  prometheus_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ./prometheus-data
+  grafana_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ./grafana-data
+  maria_db_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ./maria-db-data
+  mongo_db_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ./mongo-db-data
+  images_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ./images
 
 networks:
   application:
