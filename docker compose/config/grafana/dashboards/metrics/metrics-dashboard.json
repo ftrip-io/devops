@@ -77,7 +77,7 @@
           },
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "floor(sum(increase(http_requests_received_total[24h])))",
+          "expr": "floor(sum(increase(http_requests_received_total{job=~\"$service\"}[24h])))",
           "instant": false,
           "interval": "",
           "legendFormat": "__auto",
@@ -142,7 +142,7 @@
             "uid": "P1809F7CD0C75ACF3"
           },
           "editorMode": "builder",
-          "expr": "sum(data_traffic_bytes) / 1000000000",
+          "expr": "sum(data_traffic_bytes{job=~\"$service\"}) / 1000000000",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -205,7 +205,7 @@
             "uid": "P1809F7CD0C75ACF3"
           },
           "editorMode": "builder",
-          "expr": "floor(sum(increase(http_requests_received_total{code=~\"4.*|5.*\"}[24h])))",
+          "expr": "floor(sum(increase(http_requests_received_total{job=~\"$service\", code=~\"4.*|5.*\"}[24h])))",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -268,7 +268,7 @@
             "uid": "P1809F7CD0C75ACF3"
           },
           "editorMode": "builder",
-          "expr": "floor(sum(increase(http_requests_received_total{code=\"404\"}[24h])))",
+          "expr": "floor(sum(increase(http_requests_received_total{job=~\"$service\", code=\"404\"}[24h])))",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -331,7 +331,7 @@
             "uid": "P1809F7CD0C75ACF3"
           },
           "editorMode": "builder",
-          "expr": "count(total_visitors)",
+          "expr": "count(total_visitors{job=~\"$service\"})",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -394,7 +394,7 @@
             "uid": "P1809F7CD0C75ACF3"
           },
           "editorMode": "builder",
-          "expr": "floor(sum(increase(http_requests_received_total{code=~\"2.*|3.*\"}[24h])))",
+          "expr": "floor(sum(increase(http_requests_received_total{job=~\"$service\", code=~\"2.*|3.*\"}[24h])))",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -407,9 +407,68 @@
   "refresh": "",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": [],
+  "tags": ["metrics"],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "allValue": null,
+        "current": { "selected": true, "text": "All", "value": ".+" },
+        "datasource": null,
+        "definition": "",
+        "hide": 0,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "service",
+        "options": [
+          {
+            "selected": false,
+            "text": "All",
+            "value": ".+"
+          },
+          {
+            "selected": false,
+            "text": "users",
+            "value": "user-service"
+          },
+          {
+            "selected": false,
+            "text": "notifications",
+            "value": "notification-service"
+          },
+          {
+            "selected": false,
+            "text": "catalog",
+            "value": "catalog-service"
+          },
+          {
+            "selected": false,
+            "text": "booking",
+            "value": "booking-service"
+          },
+          {
+            "selected": false,
+            "text": "rtc",
+            "value": "realtime-communication-service"
+          },
+          {
+            "selected": false,
+            "text": "email",
+            "value": "email-service"
+          }
+        ],
+        "query": null,
+        "refresh": false,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "custom",
+        "useTags": false
+      }
+    ]
   },
   "time": {
     "from": "now-6h",
@@ -417,7 +476,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "metrics",
+  "title": "Metrics",
   "uid": "d9d0e1fe-2f4d-44f8-85fa-55b96888bdf3",
   "version": 6,
   "weekStart": ""
