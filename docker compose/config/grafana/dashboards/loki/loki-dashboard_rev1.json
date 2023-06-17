@@ -100,7 +100,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(count_over_time({service=\"$service\"} |~ \"$search\"[$__interval]))",
+          "expr": "sum(count_over_time({service=~\"$service\"} |~ \"$search\"[$__interval]))",
           "refId": "A"
         }
       ],
@@ -169,7 +169,7 @@
       },
       "targets": [
         {
-          "expr": "{service=\"$service\"} |~ \"$search\"",
+          "expr": "{service=~\"$service\"} |~ \"$search\"",
           "refId": "A"
         }
       ],
@@ -186,7 +186,7 @@
     "list": [
       {
         "allValue": null,
-        "current": {},
+        "current": { "selected": true, "text": "All", "value": ".+" },
         "datasource": null,
         "definition": "",
         "hide": 0,
@@ -197,8 +197,8 @@
         "options": [
           {
             "selected": false,
-            "text": "playground",
-            "value": "playground"
+            "text": "All",
+            "value": ".+"
           },
           {
             "selected": false,
@@ -209,6 +209,16 @@
             "selected": false,
             "text": "notifications",
             "value": "notifications"
+          },
+          {
+            "selected": false,
+            "text": "catalog",
+            "value": "catalog"
+          },
+          {
+            "selected": false,
+            "text": "booking",
+            "value": "booking"
           },
           {
             "selected": false,

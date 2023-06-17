@@ -96,8 +96,9 @@ services:
     env_file: [".env.common", ".env.secrets"]
     environment:
       HEALTH_CHECK_BASE_PATH: http://user-service:80
-      DB_DATABASE: users_db
-      API_PREFIX: userService
+
+      DB_DATABASE: ${US_DATABASE}
+      API_PREFIX: ${US_API_PREFIX}
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -114,10 +115,11 @@ services:
       - 80
     env_file: [".env.common", ".env.secrets"]
     environment:
-      HEALTH_CHECK_BASE_PATH: http://catalog-service:80
-      DB_DATABASE: catalog_db
-      API_PREFIX: catalogService
       BOOKING_SERVICE_URL: http://booking-service:80
+      HEALTH_CHECK_BASE_PATH: http://catalog-service:80
+
+      DB_DATABASE: ${CS_DATABASE}
+      API_PREFIX: ${CS_API_PREFIX}
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -134,9 +136,11 @@ services:
       - 80
     env_file: [".env.common", ".env.secrets"]
     environment:
+      CATALOG_SERVICE_URL: http://catalog-service:80
       HEALTH_CHECK_BASE_PATH: http://booking-service:80
-      DB_DATABASE: booking_db
-      API_PREFIX: bookingService
+
+      DB_DATABASE: ${BS_DATABASE}
+      API_PREFIX: ${BS_API_PREFIX}
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -154,8 +158,9 @@ services:
     env_file: [".env.common", ".env.secrets"]
     environment:
       HEALTH_CHECK_BASE_PATH: http://notification-service:80
-      MDB_DATABASE: notifications_db
-      API_PREFIX: notificationService
+
+      MDB_DATABASE: ${NS_DATABASE}
+      API_PREFIX: ${NS_API_PREFIX}
     depends_on:
       mongo:
         condition: service_healthy
@@ -173,7 +178,8 @@ services:
     env_file: [".env.common", ".env.secrets"]
     environment:
       HEALTH_CHECK_BASE_PATH: http://email-service:80
-      MDB_DATABASE: emails_db
+
+      MDB_DATABASE: ${ES_DATABASE}
     depends_on:
       mongo:
         condition: service_healthy
