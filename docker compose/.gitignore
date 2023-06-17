@@ -1,5 +1,7 @@
 /maria-db-data
-/mongo-data
+/mongo-db-data
+/prometheus-data
+/grafana-data
 /images
 
 .env.secrets
