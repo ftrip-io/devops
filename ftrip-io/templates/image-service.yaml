@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: image-service
+  name: image-service
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: image-service
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: image-service-pvc
+spec:
+  storageClassName: microk8s-hostpath
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: image-service
+  name: image-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: image-service
+  template:
+    metadata:
+      labels:
+        network/application: "true"
+        network/monitoring: "true"
+        app: image-service
+    spec:
+      containers:
+        - name: image-service
+          image: ftripio/image-service-dev
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          env:
+            - name: API_PROXY_URL
+              value: ftripio.isobarot.com
+            - name: HEALTH_CHECK_BASE_PATH
+              value: http://image-service:80
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  key: PORT
+                  name: ftrip-io-image-service-config
+            - name: AUTH_HOSTNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: ftrip-io-image-service-config
+                  key: AUTH_HOSTNAME
+            - name: AUTH_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: ftrip-io-image-service-config
+                  key: AUTH_PORT
+            - name: AUTH_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: ftrip-io-image-service-config
+                  key: AUTH_PATH
+            - name: GRAFANA_LOKI_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: GRAFANA_LOKI_URL
+                  name: ftrip-io-infra-config
+            - name: JAEGER_PORT
+              valueFrom:
+                configMapKeyRef:
+                  key: JAEGER_PORT
+                  name: ftrip-io-infra-config
+            - name: JAEGER_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  key: JAEGER_SERVER
+                  name: ftrip-io-infra-config
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: JWT_SECRET
+                  name: ftrip-io-infra-secrets
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: images-volume
+              mountPath: /app/images
+      volumes:
+        - name: images-volume
+          persistentVolumeClaim:
+            claimName: image-service-pvc
