@@ -53,6 +53,38 @@ spec:
                 name: image-service
                 port:
                   number: 80
+          - path: /photoService(/api)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: image-service
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - ftripio.isobarot.com
+      secretName: ftripio-prod-tls
+---
+apiVersion: "networking.k8s.io/v1"
+kind: Ingress
+metadata:
+  name: ftripio-photos-ingress
+  annotations:
+    acme.cert-manager.io/http01-edit-in-place: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/rewrite-target: /images$2
+spec:
+  rules:
+    - host: ftripio.isobarot.com
+      http:
+        paths:
+          - path: /photoService(/images)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: image-service
+                port:
+                  number: 80
   tls:
     - hosts:
         - ftripio.isobarot.com
