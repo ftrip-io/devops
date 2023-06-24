@@ -71,4 +71,4 @@ data:
   PORT: "80"
   AUTH_HOSTNAME: catalog-service
   AUTH_PORT: "80"
-  AUTH_PATH: /Accommodations/can-modify/
+  AUTH_PATH: /api/Accommodations/can-modify/
