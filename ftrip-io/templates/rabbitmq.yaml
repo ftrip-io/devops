@@ -12,27 +12,38 @@ spec:
         app: rabbitmq
     spec:
       containers:
-      - name: rabbitmq
-        image: rabbitmq:3-management-alpine
-        env:
-        - name: RABBITMQ_DEFAULT_USER
-          valueFrom:
-            secretKeyRef:
-              name: ftrip-io-infra-secrets
-              key: RMQ_USER
-        - name: RABBITMQ_DEFAULT_PASS
-          valueFrom:
-            secretKeyRef:
-              name: ftrip-io-infra-secrets
-              key: RMQ_PASSWORD
-        resources:
-          requests:
-            cpu: "50m"
-          limits:
-            memory: "128Mi"
-            cpu: "500m"
-        ports:
-        - containerPort: 5672
+        - name: rabbitmq
+          image: rabbitmq:3-management-alpine
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: ftrip-io-infra-secrets
+                  key: RMQ_USER
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: ftrip-io-infra-secrets
+                  key: RMQ_PASSWORD
+          resources:
+            requests:
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 5672
+            - containerPort: 15692
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/rabbitmq
+      volumes:
+        - name: config-volume
+          configMap:
+            name: ftrip-io-rabbitmq-config
+            items:
+              - key: enabled_plugins
+                path: enabled_plugins
 ---
 apiVersion: v1
 kind: Service
@@ -42,7 +53,9 @@ spec:
   selector:
     app: rabbitmq
   ports:
-  - name: default
-    port: 5672
-    targetPort: 5672
-  type: NodePort
+    - name: default
+      port: 5672
+      targetPort: 5672
+    - name: admin
+      port: 15692
+      targetPort: 15692

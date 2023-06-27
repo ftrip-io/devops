@@ -7,4 +7,4 @@ providers:
     type: file
     disableDeletion: true
     options:
-      path: /dashboards/rabbitmq
+      path: /usr/share/grafana/dashboards/rabbitmq
