@@ -34,6 +34,9 @@ spec:
         - name: user-service
           image: ftripio/user-service-dev
           imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 0
           ports:
             - containerPort: 80
           env:
@@ -71,6 +74,11 @@ spec:
                 secretKeyRef:
                   key: DB_USER
                   name: ftrip-io-infra-secrets
+            - name: BOOKING_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ftrip-io-user-service-config
+                  key: BOOKING_SERVICE_URL
             - name: GRAFANA_LOKI_URL
               valueFrom:
                 configMapKeyRef:

@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: grafana
+  name: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        network/application: "true"
+        network/monitoring: "true"
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:9.5.2
+          command:
+            - /bin/bash
+            - -c
+            - unzip /dashboards/grafana-dash.zip && unzip /etc/grafana/provisioning/grafana-prov.zip && /run.sh
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 0
+          volumeMounts:
+            - name: data-volume
+              mountPath: /var/lib/grafana
+            - name: dashboard-config-volume
+              mountPath: /dashboards
+            - name: provisioning-config-volume
+              mountPath: /etc/grafana/provisioning
+          ports:
+            - containerPort: 3000
+          env:
+            - name: GF_PATHS_PROVISIONING
+              value: /usr/share/grafana/provisioning
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: GF_SECURITY_ADMIN_PASSWORD
+                  name: ftrip-io-grafana-secrets
+            - name: GF_USERS_ALLOW_SIGN_UP
+              valueFrom:
+                secretKeyRef:
+                  key: GF_USERS_ALLOW_SIGN_UP
+                  name: ftrip-io-grafana-secrets
+            - name: GF_AUTH_ANONYMOUS_ENABLED
+              valueFrom:
+                secretKeyRef:
+                  key: GF_AUTH_ANONYMOUS_ENABLED
+                  name: ftrip-io-grafana-secrets
+            - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+              valueFrom:
+                secretKeyRef:
+                  key: GF_AUTH_ANONYMOUS_ORG_ROLE
+                  name: ftrip-io-grafana-secrets
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: grafana-pvc
+        - name: dashboard-config-volume
+          configMap:
+            name: ftrip-io-grafana-config
+            items:
+              - key: grafana-dash.zip
+                path: grafana-dash.zip
+        - name: provisioning-config-volume
+          configMap:
+            name: ftrip-io-grafana-config
+            items:
+              - key: grafana-prov.zip
+                path: grafana-prov.zip
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-pvc
+spec:
+  storageClassName: microk8s-hostpath
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 5Gi
+  accessModes:
+    - ReadWriteOnce

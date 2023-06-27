@@ -34,6 +34,9 @@ spec:
         - name: booking-service
           image: ftripio/booking-service-dev
           imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 0
           ports:
             - containerPort: 80
           env:
@@ -41,6 +44,11 @@ spec:
               value: ftripio.isobarot.com
             - name: HEALTH_CHECK_BASE_PATH
               value: http://booking-service:80
+            - name: CATALOG_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ftrip-io-booking-service-config
+                  key: CATALOG_SERVICE_URL
             - name: API_PREFIX
               valueFrom:
                 configMapKeyRef:
