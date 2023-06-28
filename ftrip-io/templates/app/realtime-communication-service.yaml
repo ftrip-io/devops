@@ -49,26 +49,6 @@ spec:
                 configMapKeyRef:
                   key: API_PREFIX
                   name: ftrip-io-realtime-communication-service-config
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: DB_PASSWORD
-                  name: ftrip-io-infra-secrets
-            - name: DB_PORT
-              valueFrom:
-                configMapKeyRef:
-                  key: DB_PORT
-                  name: ftrip-io-infra-config
-            - name: DB_SERVER
-              valueFrom:
-                configMapKeyRef:
-                  key: DB_SERVER
-                  name: ftrip-io-infra-config
-            - name: DB_USER
-              valueFrom:
-                secretKeyRef:
-                  key: DB_USER
-                  name: ftrip-io-infra-secrets
             - name: GRAFANA_LOKI_URL
               valueFrom:
                 configMapKeyRef:
@@ -89,26 +69,6 @@ spec:
                 secretKeyRef:
                   key: JWT_SECRET
                   name: ftrip-io-infra-secrets
-            - name: MDB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: MDB_PASSWORD
-                  name: ftrip-io-infra-secrets
-            - name: MDB_PORT
-              valueFrom:
-                configMapKeyRef:
-                  key: MDB_PORT
-                  name: ftrip-io-infra-config
-            - name: MDB_URL
-              valueFrom:
-                configMapKeyRef:
-                  key: MDB_URL
-                  name: ftrip-io-infra-config
-            - name: MDB_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  key: MDB_USERNAME
-                  name: ftrip-io-infra-secrets
             - name: RMQ_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -128,25 +88,5 @@ spec:
               valueFrom:
                 secretKeyRef:
                   key: RMQ_USER
-                  name: ftrip-io-infra-secrets
-            - name: SMTP_HOST
-              valueFrom:
-                configMapKeyRef:
-                  key: SMTP_HOST
-                  name: ftrip-io-infra-config
-            - name: SMTP_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: SMTP_PASSWORD
-                  name: ftrip-io-infra-secrets
-            - name: SMTP_PORT
-              valueFrom:
-                configMapKeyRef:
-                  key: SMTP_PORT
-                  name: ftrip-io-infra-config
-            - name: SMTP_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  key: SMTP_USERNAME
                   name: ftrip-io-infra-secrets
           resources: {{- toYaml .Values.resources | nindent 12 }}
