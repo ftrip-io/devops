@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftrip-io-user-service-config
+data:
+  DB_DATABASE: users_db
+  API_PREFIX: userService
+  BOOKING_SERVICE_URL: http://booking-service:80
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftrip-io-catalog-service-config
+data:
+  DB_DATABASE: catalog_db
+  API_PREFIX: catalogService
+  BOOKING_SERVICE_URL: http://booking-service:80
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftrip-io-booking-service-config
+data:
+  DB_DATABASE: booking_db
+  API_PREFIX: bookingService
+  CATALOG_SERVICE_URL: http://catalog-service:80
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftrip-io-notification-service-config
+data:
+  MDB_DATABASE: notifications_db
+  API_PREFIX: notificationService
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftrip-io-email-service-config
+data:
+  MDB_DATABASE: emails_db
+  API_PREFIX: emailService
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftrip-io-realtime-communication-service-config
+data:
+  API_PREFIX: rtcService
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftrip-io-image-service-config
+data:
+  PORT: "80"
+  AUTH_HOSTNAME: catalog-service
+  AUTH_PORT: "80"
+  AUTH_PATH: /api/Accommodations/can-modify/
