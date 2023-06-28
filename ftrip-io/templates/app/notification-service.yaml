@@ -54,26 +54,6 @@ spec:
                 configMapKeyRef:
                   name: ftrip-io-notification-service-config
                   key: MDB_DATABASE
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: DB_PASSWORD
-                  name: ftrip-io-infra-secrets
-            - name: DB_PORT
-              valueFrom:
-                configMapKeyRef:
-                  key: DB_PORT
-                  name: ftrip-io-infra-config
-            - name: DB_SERVER
-              valueFrom:
-                configMapKeyRef:
-                  key: DB_SERVER
-                  name: ftrip-io-infra-config
-            - name: DB_USER
-              valueFrom:
-                secretKeyRef:
-                  key: DB_USER
-                  name: ftrip-io-infra-secrets
             - name: GRAFANA_LOKI_URL
               valueFrom:
                 configMapKeyRef:
@@ -133,25 +113,5 @@ spec:
               valueFrom:
                 secretKeyRef:
                   key: RMQ_USER
-                  name: ftrip-io-infra-secrets
-            - name: SMTP_HOST
-              valueFrom:
-                configMapKeyRef:
-                  key: SMTP_HOST
-                  name: ftrip-io-infra-config
-            - name: SMTP_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: SMTP_PASSWORD
-                  name: ftrip-io-infra-secrets
-            - name: SMTP_PORT
-              valueFrom:
-                configMapKeyRef:
-                  key: SMTP_PORT
-                  name: ftrip-io-infra-config
-            - name: SMTP_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  key: SMTP_USERNAME
                   name: ftrip-io-infra-secrets
           resources: {{- toYaml .Values.resources | nindent 12 }}

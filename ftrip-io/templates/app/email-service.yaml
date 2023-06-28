@@ -54,26 +54,6 @@ spec:
                 configMapKeyRef:
                   name: ftrip-io-email-service-config
                   key: MDB_DATABASE
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: DB_PASSWORD
-                  name: ftrip-io-infra-secrets
-            - name: DB_PORT
-              valueFrom:
-                configMapKeyRef:
-                  key: DB_PORT
-                  name: ftrip-io-infra-config
-            - name: DB_SERVER
-              valueFrom:
-                configMapKeyRef:
-                  key: DB_SERVER
-                  name: ftrip-io-infra-config
-            - name: DB_USER
-              valueFrom:
-                secretKeyRef:
-                  key: DB_USER
-                  name: ftrip-io-infra-secrets
             - name: GRAFANA_LOKI_URL
               valueFrom:
                 configMapKeyRef:
